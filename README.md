@@ -103,27 +103,21 @@ It’s ideal for monitoring maintenance issues, assigning tasks to teams, and pl
 
 ## 📸 Screenshots
 
-### 🔐 Login Page (User & Admin)
-<img src="https://drive.google.com/uc?export=view&id=1Ccd4r-BiA_YnzZmBN9i7T0IyyTRRmHOI" width="300"/>
 
-### 🏠 Home / Feed Page
-<img src="https://drive.google.com/uc?export=view&id=16a4ij9XEwji2e9Fc7ggeDMJadjpPRxy2" width="300"/>
-
-### 📝 Issue Reporting Page
-<img src="https://drive.google.com/uc?export=view&id=1_175va_-KOPRzl9KoEZjrQ44LdtTcFhs" width="300"/>
-
-### 🗺️ Map View with Filters
-<img src="https://drive.google.com/uc?export=view&id=1OfVB_3_xNTvxfY57mieLmicbGraxRukb" width="300"/>
-
-### 📆 Issue Timeline View
-<img src="https://drive.google.com/uc?export=view&id=1Cn4XslSRizQ65DefQ_Dn9dDdHy4nUCBJ" width="300"/>
-
-### 🔒 Admin Dashboard & Analytics
-<img src="https://drive.google.com/uc?export=view&id=1EAiuH9hVOGiJ7Xde0vH0ybgKdbepywM_" width="300"/>
+##  Login and Signup pages
 <img src="https://drive.google.com/uc?export=view&id=1weujH7d-5eu3-QdP-7CdRzPkh-iGF-GU" width="300"/>
-
-### ⚙️ Additional Screens (Filters, Profile, etc.)
 <img src="https://drive.google.com/uc?export=view&id=10Fy_2UlQiQy0qSVpCQF9Om5NRFe5Eico" width="300"/>
+
+
+<img src="https://drive.google.com/file/d/1LLd4-W7AWjHc4vTx-ClFthXnIbuZChP4/view?usp=sharing" width="300"/>
+
+<img src="https://drive.google.com/uc?export=view&id=10Fy_2UlQiQy0qSVpCQF9Om5NRFe5Eico" width="300"/>
+<img src="https://drive.google.com/uc?export=view&id=16a4ij9XEwji2e9Fc7ggeDMJadjpPRxy2" width="300"/>
+<img src="https://drive.google.com/uc?export=view&id=1_175va_-KOPRzl9KoEZjrQ44LdtTcFhs" width="300"/>
+<img src="https://drive.google.com/uc?export=view&id=1OfVB_3_xNTvxfY57mieLmicbGraxRukb" width="300"/>
+<img src="https://drive.google.com/uc?export=view&id=1Cn4XslSRizQ65DefQ_Dn9dDdHy4nUCBJ" width="300"/>
+<img src="https://drive.google.com/uc?export=view&id=1EAiuH9hVOGiJ7Xde0vH0ybgKdbepywM_" width="300"/>
+
 <img src="https://drive.google.com/uc?export=view&id=1jNFMMCMw5AR5WI2ZoDKhVEZ8x5-xZI0z" width="300"/>
 <img src="https://drive.google.com/uc?export=view&id=1ydj2viROHaRNFqBhVmFZF0-I4-N_NQ-d" width="300"/>
 <img src="https://drive.google.com/uc?export=view&id=13ObjAB6X4xrzZk2Ikx9M8EMuz80-MtDy" width="300"/>
