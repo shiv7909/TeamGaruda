@@ -505,209 +505,45 @@ class _AnalyticsState extends State<Analytics> {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  // Analytics Cards Row - Mobile vs Desktop
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      bool isMobile = constraints.maxWidth < 600;
-
-                      if (isMobile) {
-                        // Mobile: Vertical stack
-                        return Column(
-                          children: [
-                            Card(
-                              elevation: 0,
-                              color: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                side: BorderSide(color: Colors.grey.shade200),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(20),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Icon(Icons.schedule, color: Colors.grey.shade600, size: 20),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: Text(
-                                            'Resolution Times',
-                                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                              fontWeight: FontWeight.w600,
-                                              color: const Color(0xFF334155),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 16),
-                                    const Column(
-                                      children: [
-                                        _ResolutionTimeCard(category: 'Roads', avgTime: '2.3 days', color: Color(0xFF3B82F6)),
-                                        _ResolutionTimeCard(category: 'Lighting', avgTime: '1.8 days', color: Color(0xFFF59E0B)),
-                                        _ResolutionTimeCard(category: 'Water', avgTime: '3.1 days', color: Color(0xFF06B6D4)),
-                                        _ResolutionTimeCard(category: 'Cleanliness', avgTime: '1.2 days', color: Color(0xFF10B981)),
-                                        _ResolutionTimeCard(category: 'Safety', avgTime: '4.7 days', color: Color(0xFFEF4444)),
-                                      ],
-                                    ),
-                                  ],
+                  // Resolution Times Card
+                  Card(
+                    elevation: 0,
+                    color: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      side: BorderSide(color: Colors.grey.shade200),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.schedule, color: Colors.grey.shade600, size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Resolution Times',
+                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF334155),
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 16),
-                            Card(
-                              elevation: 0,
-                              color: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                side: BorderSide(color: Colors.grey.shade200),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(20),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Icon(Icons.location_on, color: Colors.grey.shade600, size: 20),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: Text(
-                                            'Geographic Distribution',
-                                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                              fontWeight: FontWeight.w600,
-                                              color: const Color(0xFF334155),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Container(
-                                      height: 180,
-                                      decoration: BoxDecoration(
-                                        color: Colors.grey.shade100,
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: const Center(
-                                        child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Icon(Icons.map, size: 40, color: Color(0xFF64748B)),
-                                            SizedBox(height: 8),
-                                            Text('Heat Map', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                                            Text('Location density', style: TextStyle(fontSize: 12)),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        );
-                      } else {
-                        // Desktop: Side-by-side layout
-                        return Row(
-                          children: [
-                            Expanded(
-                              child: Card(
-                                elevation: 0,
-                                color: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                  side: BorderSide(color: Colors.grey.shade200),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(24),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Icon(Icons.schedule, color: Colors.grey.shade600, size: 20),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            'Resolution Times',
-                                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                              fontWeight: FontWeight.w600,
-                                              color: const Color(0xFF334155),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 16),
-                                      const Column(
-                                        children: [
-                                          _ResolutionTimeCard(category: 'Roads', avgTime: '2.3 days', color: Color(0xFF3B82F6)),
-                                          _ResolutionTimeCard(category: 'Lighting', avgTime: '1.8 days', color: Color(0xFFF59E0B)),
-                                          _ResolutionTimeCard(category: 'Water', avgTime: '3.1 days', color: Color(0xFF06B6D4)),
-                                          _ResolutionTimeCard(category: 'Cleanliness', avgTime: '1.2 days', color: Color(0xFF10B981)),
-                                          _ResolutionTimeCard(category: 'Safety', avgTime: '4.7 days', color: Color(0xFFEF4444)),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 24),
-                            Expanded(
-                              child: Card(
-                                elevation: 0,
-                                color: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                  side: BorderSide(color: Colors.grey.shade200),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(24),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Icon(Icons.location_on, color: Colors.grey.shade600, size: 20),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            'Geographic Distribution',
-                                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                              fontWeight: FontWeight.w600,
-                                              color: const Color(0xFF334155),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 16),
-                                      Container(
-                                        height: 200,
-                                        decoration: BoxDecoration(
-                                          color: Colors.grey.shade100,
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: const Center(
-                                          child: Column(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: [
-                                              Icon(Icons.map, size: 48, color: Color(0xFF64748B)),
-                                              SizedBox(height: 8),
-                                              Text('Heat Map', style: TextStyle(fontWeight: FontWeight.w600)),
-                                              Text('Issues by location density'),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        );
-                      }
-                    },
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          const Column(
+                            children: [
+                              _ResolutionTimeCard(category: 'Roads', avgTime: '2.3 days', color: Color(0xFF3B82F6)),
+                              _ResolutionTimeCard(category: 'Lighting', avgTime: '1.8 days', color: Color(0xFFF59E0B)),
+                              _ResolutionTimeCard(category: 'Water', avgTime: '3.1 days', color: Color(0xFF06B6D4)),
+                              _ResolutionTimeCard(category: 'Cleanliness', avgTime: '1.2 days', color: Color(0xFF10B981)),
+                              _ResolutionTimeCard(category: 'Safety', avgTime: '4.7 days', color: Color(0xFFEF4444)),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 24),
                 ],
@@ -1264,19 +1100,7 @@ class _UserManagementState extends State<UserManagement> {
                               }
                             },
                           ),
-                          const SizedBox(height: 12),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              onPressed: () {},
-                              icon: const Icon(Icons.person_add, size: 16),
-                              label: const Text('Add Admin'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF6366F1),
-                                foregroundColor: Colors.white,
-                              ),
-                            ),
-                          ),
+                          
                         ],
                       ),
                     ] else ...[
@@ -1297,16 +1121,7 @@ class _UserManagementState extends State<UserManagement> {
                               }
                             },
                           ),
-                          const SizedBox(width: 12),
-                          ElevatedButton.icon(
-                            onPressed: () {},
-                            icon: const Icon(Icons.person_add, size: 16),
-                            label: const Text('Add Admin'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF6366F1),
-                              foregroundColor: Colors.white,
-                            ),
-                          ),
+                         
                         ],
                       ),
                     ],
@@ -1322,124 +1137,6 @@ class _UserManagementState extends State<UserManagement> {
               },
             ),
           ),
-        ),
-        const SizedBox(height: 24),
-        // User Analytics and Verification - Mobile vs Desktop Layout
-        LayoutBuilder(
-          builder: (context, constraints) {
-            bool isMobile = constraints.maxWidth < 800;
-
-            if (isMobile) {
-              // Mobile: Vertical stack layout
-              return Column(
-                children: [
-                  // User Verification Card
-                  Card(
-                    elevation: 0,
-                    color: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      side: BorderSide(color: Colors.grey.shade200),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(Icons.verified_user, color: Colors.grey.shade600, size: 20),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'User Verification Status',
-                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    color: const Color(0xFF334155),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Column(
-                            children: [
-                              _VerificationCard(
-                                title: 'Active Users',
-                                count: '${users.where((u) => u.status.toLowerCase() == 'active').length}',
-                                percentage: users.isNotEmpty ? ((users.where((u) => u.status.toLowerCase() == 'active').length / users.length) * 100).round() : 0,
-                                color: const Color(0xFF10B981),
-                              ),
-                              const SizedBox(height: 12),
-                              _VerificationCard(
-                                title: 'Inactive Users',
-                                count: '${users.where((u) => u.status.toLowerCase() == 'inactive').length}',
-                                percentage: users.isNotEmpty ? ((users.where((u) => u.status.toLowerCase() == 'inactive').length / users.length) * 100).round() : 0,
-                                color: const Color(0xFF64748B),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            } else {
-              // Desktop: Side-by-side layout
-              return Row(
-                children: [
-                  Expanded(
-                    child: Card(
-                      elevation: 0,
-                      color: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        side: BorderSide(color: Colors.grey.shade200),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'User Verification Status',
-                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF334155),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _VerificationCard(
-                                    title: 'Active Users',
-                                    count: '${users.where((u) => u.status.toLowerCase() == 'active').length}',
-                                    percentage: users.isNotEmpty ? ((users.where((u) => u.status.toLowerCase() == 'active').length / users.length) * 100).round() : 0,
-                                    color: const Color(0xFF10B981),
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: _VerificationCard(
-                                    title: 'Inactive Users',
-                                    count: '${users.where((u) => u.status.toLowerCase() == 'inactive').length}',
-                                    percentage: users.isNotEmpty ? ((users.where((u) => u.status.toLowerCase() == 'inactive').length / users.length) * 100).round() : 0,
-                                    color: const Color(0xFF64748B),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            }
-          },
         ),
       ],
     ),
@@ -3749,74 +3446,6 @@ class _BulkActionButton extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _VerificationCard extends StatelessWidget {
-  final String title;
-  final String count;
-  final int percentage;
-  final Color color;
-
-  const _VerificationCard({
-    required this.title,
-    required this.count,
-    required this.percentage,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade200),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Color(0xFF64748B),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            count,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF0F172A),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: LinearProgressIndicator(
-                  value: percentage / 100,
-                  backgroundColor: color.withOpacity(0.2),
-                  valueColor: AlwaysStoppedAnimation(color),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '$percentage%',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: color,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }
