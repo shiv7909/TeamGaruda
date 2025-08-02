@@ -8,6 +8,8 @@ class Issue {
   final double? longitude;
   final String userId;
   final String? imageUrl;
+  final List<String>? imageUrls;
+  final List<String>? completedImageUrls;
   final DateTime createdAt;
 
   Issue({
@@ -20,6 +22,8 @@ class Issue {
     this.longitude,
     required this.userId,
     this.imageUrl,
+    this.imageUrls,
+    this.completedImageUrls,
     required this.createdAt,
   });
 
@@ -34,6 +38,12 @@ class Issue {
       longitude: json['longitude']?.toDouble(),
       userId: json['user_id'] ?? '',
       imageUrl: json['image_url'],
+      imageUrls: json['image_urls'] != null 
+          ? List<String>.from(json['image_urls'] is List ? json['image_urls'] : [])
+          : null,
+      completedImageUrls: json['completed_image_urls'] != null 
+          ? List<String>.from(json['completed_image_urls'] is List ? json['completed_image_urls'] : [])
+          : null,
       createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toIso8601String()),
     );
   }
@@ -49,11 +59,40 @@ class Issue {
       'longitude': longitude,
       'user_id': userId,
       'image_url': imageUrl,
+      'image_urls': imageUrls,
+      'completed_image_urls': completedImageUrls,
       'created_at': createdAt.toIso8601String(),
     };
   }
 
   String get displayId => 'CIV-${id.substring(0, 8).toUpperCase()}';
+  
+  // Get all available image URLs
+  List<String> get allImageUrls {
+    List<String> images = [];
+    if (imageUrl != null && imageUrl!.isNotEmpty) {
+      images.add(imageUrl!);
+    }
+    if (imageUrls != null && imageUrls!.isNotEmpty) {
+      images.addAll(imageUrls!.where((url) => url.isNotEmpty));
+    }
+    return images;
+  }
+  
+  // Get all completed image URLs
+  List<String> get allCompletedImageUrls {
+    List<String> images = [];
+    if (completedImageUrls != null && completedImageUrls!.isNotEmpty) {
+      images.addAll(completedImageUrls!.where((url) => url.isNotEmpty));
+    }
+    return images;
+  }
+  
+  // Check if issue can be modified (can't change status back from resolved)
+  bool get canModifyStatus => status.toLowerCase() != 'resolved';
+  
+  // Check if admin can upload completion images
+  bool get canUploadCompletionImages => status.toLowerCase() == 'resolved';
   
   // For backward compatibility, map issueType to category
   String get category => issueType;

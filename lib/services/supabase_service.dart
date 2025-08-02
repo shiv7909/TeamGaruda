@@ -1,10 +1,14 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:typed_data';
 import '../models/issue.dart';
 import '../models/user.dart';
 import '../models/analytics.dart';
 
 class SupabaseService {
   static final SupabaseClient _client = Supabase.instance.client;
+
+  // Get the Supabase client for real-time subscriptions
+  static SupabaseClient getClient() => _client;
 
   // Test connection to Supabase
   static Future<bool> testConnection() async {
@@ -153,15 +157,71 @@ class SupabaseService {
     int limit = 50,
   }) async {
     try {
-      var query = _client.from('profiles').select('*');
+      print('📊 Fetching users from profiles table...');
       
-      // Note: Since your profiles table doesn't have a status field,
-      // we'll need to get all profiles for now
-      // You may want to add a status field to the profiles table
+      // Fetch all profiles
+      var profilesQuery = _client.from('profiles').select('*');
+      final profilesResponse = await profilesQuery.limit(limit).order('created_at', ascending: false);
       
-      final response = await query.limit(limit).order('created_at', ascending: false);
+      print('📊 Found ${(profilesResponse as List).length} profiles');
       
-      return (response as List).map((item) => CivicUser.fromJson(item)).toList();
+      List<CivicUser> users = [];
+      
+      // For each profile, calculate report count and derive status
+      for (var profileData in profilesResponse) {
+        try {
+          // Get report count for this user
+          final reportCountResponse = await _client
+              .from('issues')
+              .select('id')
+              .eq('user_id', profileData['id'])
+              .count();
+          
+          int reportCount = reportCountResponse.count ?? 0;
+          
+          // Create user object with calculated report count
+          var userData = Map<String, dynamic>.from(profileData);
+          userData['report_count'] = reportCount;
+          
+          // Derive status based on activity
+          final user = CivicUser.fromJson(userData);
+          
+          // Simple logic to derive status based on activity
+          String derivedStatus;
+          final now = DateTime.now();
+          final daysSinceCreation = now.difference(user.createdAt).inDays;
+          
+          if (user.reportCount > 10) {
+            derivedStatus = 'active';
+          } else if (user.reportCount == 0 && daysSinceCreation > 30) {
+            derivedStatus = 'inactive';
+          } else if (user.reportCount > 0) {
+            derivedStatus = 'active';
+          } else {
+            derivedStatus = 'inactive';
+          }
+          
+          userData['status'] = derivedStatus;
+          
+          // Create final user object with derived status
+          final finalUser = CivicUser.fromJson(userData);
+          
+          // Filter by status if specified
+          if (status == null || status == 'All' || finalUser.status.toLowerCase() == status.toLowerCase()) {
+            users.add(finalUser);
+          }
+        } catch (e) {
+          print('Error processing profile ${profileData['id']}: $e');
+          // Add user with default values if error occurs
+          var userData = Map<String, dynamic>.from(profileData);
+          userData['report_count'] = 0;
+          userData['status'] = 'inactive';
+          users.add(CivicUser.fromJson(userData));
+        }
+      }
+      
+      print('📊 Processed ${users.length} users (filtered by status: ${status ?? 'All'})');
+      return users;
     } catch (e) {
       print('Error fetching users: $e');
       return [];
@@ -322,6 +382,88 @@ class SupabaseService {
       return false;
     } catch (e) {
       print('Error updating user status: $e');
+      return false;
+    }
+  }
+
+  // Upload image to Supabase Storage
+  static Future<String?> uploadImage(Uint8List imageBytes, String fileName) async {
+    try {
+      final String path = 'completion_images/${DateTime.now().millisecondsSinceEpoch}_$fileName';
+      
+      final String fullPath = await _client.storage
+          .from('issues')
+          .uploadBinary(path, imageBytes);
+      
+      // Get public URL
+      final String publicUrl = _client.storage
+          .from('issues')
+          .getPublicUrl(path);
+      
+      return publicUrl;
+    } catch (e) {
+      print('Error uploading image: $e');
+      return null;
+    }
+  }
+
+  // Upload multiple completion images
+  static Future<List<String>> uploadCompletionImages(List<Uint8List> imageBytesList, List<String> fileNames) async {
+    List<String> uploadedUrls = [];
+    
+    for (int i = 0; i < imageBytesList.length; i++) {
+      final String? url = await uploadImage(imageBytesList[i], fileNames[i]);
+      if (url != null) {
+        uploadedUrls.add(url);
+      }
+    }
+    
+    return uploadedUrls;
+  }
+
+  // Update issue with completion images
+  static Future<bool> updateIssueCompletionImages(String issueId, List<String> completionImageUrls) async {
+    try {
+      await _client
+          .from('issues')
+          .update({
+            'completed_image_urls': completionImageUrls,
+          })
+          .eq('id', issueId);
+      return true;
+    } catch (e) {
+      print('Error updating issue completion images: $e');
+      return false;
+    }
+  }
+
+  // Update issue status with restriction for resolved issues
+  static Future<bool> updateIssueStatusRestricted(String issueId, String newStatus) async {
+    try {
+      // First check current status
+      final response = await _client
+          .from('issues')
+          .select('status')
+          .eq('id', issueId)
+          .single();
+          
+      final currentStatus = response['status'] as String;
+      
+      // Prevent changing status back from resolved
+      if (currentStatus.toLowerCase() == 'resolved' && newStatus.toLowerCase() != 'resolved') {
+        print('Cannot change status back from resolved');
+        return false;
+      }
+      
+      await _client
+          .from('issues')
+          .update({
+            'status': newStatus,
+          })
+          .eq('id', issueId);
+      return true;
+    } catch (e) {
+      print('Error updating issue status: $e');
       return false;
     }
   }

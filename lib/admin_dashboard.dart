@@ -1,6 +1,8 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:typed_data';
 import 'services/supabase_service.dart';
 import 'models/analytics.dart';
 import 'models/issue.dart';
@@ -101,36 +103,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
     });
   }
 
-  Drawer _buildDrawer() => Drawer(
-      backgroundColor: Colors.white,
-      child: ListView(
-        children: [
-          DrawerHeader(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Icon(Icons.remove_red_eye, size: 40, color: Colors.white),
-                  SizedBox(height: 12),
-                  Text('The Third Eye', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-                  Text('Admin Dashboard', style: TextStyle(color: Colors.white70, fontSize: 14)),
-                ],
-              )),
-          const SizedBox(height: 8),
-          _buildDrawerItem(Icons.dashboard_outlined, 'Dashboard', 0),
-          _buildDrawerItem(Icons.report_problem_outlined, 'Issues', 1),
-          _buildDrawerItem(Icons.analytics_outlined, 'Analytics', 2),
-          _buildDrawerItem(Icons.people_outline, 'Users', 3),
-        ],
-      ));
-
   BottomNavigationBar _buildBottomNavigationBar() => BottomNavigationBar(
     type: BottomNavigationBarType.fixed,
     backgroundColor: Colors.white,
@@ -170,38 +142,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
       ),
     ],
   );
-
-  Widget _buildDrawerItem(IconData icon, String title, int index) {
-    final bool isSelected = _selectedIndex == index;
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: isSelected ? const Color(0xFF6366F1).withOpacity(0.1) : null,
-      ),
-      child: ListTile(
-        leading: Icon(
-          icon,
-          color: isSelected ? const Color(0xFF6366F1) : const Color(0xFF64748B),
-          size: 22,
-        ),
-        title: Text(
-            title,
-            style: TextStyle(
-              color: isSelected ? const Color(0xFF6366F1) : const Color(0xFF334155),
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-              fontSize: 15,
-            )
-        ),
-        onTap: () {
-          setState(() => _selectedIndex = index);
-          Navigator.pop(context);
-        },
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      ),
-    );
-  }
 
   NavigationRail _buildNavigationRail() => NavigationRail(
       backgroundColor: Colors.white,
@@ -353,102 +293,41 @@ class _DashboardOverviewState extends State<DashboardOverview> {
                   value: '${analytics!.totalIssues}',
                   icon: Icons.report_problem,
                   color: const Color(0xFF3B82F6),
-                  trend: '+12%', // You can calculate this based on historical data
-                  trendUp: true,
                 ),
                 _StatCard(
                   title: 'Pending Review',
                   value: '${analytics!.pendingIssues}',
                   icon: Icons.pending_actions,
                   color: const Color(0xFFF59E0B),
-                  trend: '-5%',
-                  trendUp: false,
                 ),
                 _StatCard(
                   title: 'Resolved This Week',
                   value: '${analytics!.resolvedThisWeek}',
                   icon: Icons.check_circle,
                   color: const Color(0xFF10B981),
-                  trend: '+8%',
-                  trendUp: true,
                 ),
                 _StatCard(
                   title: 'Active Users',
                   value: '${analytics!.activeUsers}',
                   icon: Icons.people_alt,
                   color: const Color(0xFF8B5CF6),
-                  trend: '+15%',
-                  trendUp: true,
                 ),
                 _StatCard(
                   title: 'Flagged as Spam',
                   value: '${analytics!.flaggedIssues}',
                   icon: Icons.flag,
                   color: const Color(0xFFEF4444),
-                  trend: '+2',
-                  trendUp: true,
                 ),
                 _StatCard(
                   title: 'Banned Users',
                   value: '${analytics!.bannedUsers}',
                   icon: Icons.block,
                   color: const Color(0xFF64748B),
-                  trend: '0',
-                  trendUp: null,
                 ),
               ],
             )
           else
             const Center(child: Text('Failed to load analytics')),
-          const SizedBox(height: 32),
-          Card(
-            elevation: 0,
-            color: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: Colors.grey.shade200),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(32.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF6366F1).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(Icons.trending_up, color: Color(0xFF6366F1), size: 20),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                          'Key Performance Metrics',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFF0F172A),
-                          )
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 32),
-                  const Wrap(
-                    spacing: 48,
-                    runSpacing: 32,
-                    alignment: WrapAlignment.center,
-                    children: [
-                      _CircularStat(title: 'Resolution Rate', value: 78, color: Color(0xFF10B981)),
-                      _CircularStat(title: 'Report Accuracy', value: 92, color: Color(0xFF3B82F6)),
-                      _CircularStat(title: 'Spam Detection', value: 96, color: Color(0xFF6366F1)),
-                      _CircularStat(title: 'User Satisfaction', value: 89, color: Color(0xFF8B5CF6)),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          )
         ],
       ),
     );
@@ -831,87 +710,6 @@ class _AnalyticsState extends State<Analytics> {
                     },
                   ),
                   const SizedBox(height: 24),
-                  // Real-time Analytics
-                  Card(
-                    elevation: 0,
-                    color: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      side: BorderSide(color: Colors.grey.shade200),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(Icons.trending_up, color: Colors.grey.shade600, size: 20),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Real-time Trends',
-                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF334155),
-                                ),
-                              ),
-                              const Spacer(),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF10B981).withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.circle, size: 8, color: Color(0xFF10B981)),
-                                    SizedBox(width: 4),
-                                    Text('Live', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          const Wrap(
-                            spacing: 24,
-                            runSpacing: 16,
-                            children: [
-                              _TrendCard(
-                                title: 'Reports Today',
-                                value: '47',
-                                change: '+12%',
-                                isPositive: true,
-                                icon: Icons.today,
-                              ),
-                              _TrendCard(
-                                title: 'Avg Response Time',
-                                value: '2.4h',
-                                change: '-8%',
-                                isPositive: true,
-                                icon: Icons.timer,
-                              ),
-                              _TrendCard(
-                                title: 'User Engagement',
-                                value: '89%',
-                                change: '+5%',
-                                isPositive: true,
-                                icon: Icons.people,
-                              ),
-                              _TrendCard(
-                                title: 'Spam Detection',
-                                value: '96%',
-                                change: '+2%',
-                                isPositive: true,
-                                icon: Icons.security,
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
                 ],
               );
             }),
@@ -984,7 +782,7 @@ class _IssueManagementState extends State<IssueManagement> {
 
   Future<void> _updateIssueStatus(String issueId, String newStatus) async {
     try {
-      final success = await SupabaseService.updateIssueStatus(issueId, newStatus);
+      final success = await SupabaseService.updateIssueStatusRestricted(issueId, newStatus);
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -994,7 +792,7 @@ class _IssueManagementState extends State<IssueManagement> {
         );
         _loadData(); // Refresh data
       } else {
-        throw Exception('Failed to update status');
+        throw Exception('Cannot change status back from resolved');
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1215,6 +1013,7 @@ class _IssueManagementState extends State<IssueManagement> {
                       isMobile: isMobile,
                       isLoading: isLoading,
                       onStatusUpdate: _updateIssueStatus,
+                      onRefresh: _loadData,
                     ),
                   ],
                 );
@@ -1277,16 +1076,41 @@ class _UserManagementState extends State<UserManagement> {
   DashboardAnalytics? analytics;
   bool isLoading = true;
   String selectedStatus = 'All';
-
+  late Stream<List<Map<String, dynamic>>> _profilesStream;
+  
   @override
   void initState() {
     super.initState();
+    _setupRealtimeSubscription();
     _loadData();
+  }
+
+  void _setupRealtimeSubscription() {
+    // Set up real-time subscription to profiles table
+    _profilesStream = SupabaseService.getClient()
+        .from('profiles')
+        .stream(primaryKey: ['id'])
+        .order('created_at', ascending: false);
+    
+    // Listen to profile changes and refresh data
+    _profilesStream.listen((profiles) {
+      print('📡 Real-time update: ${profiles.length} profiles received');
+      _refreshUsersData();
+    });
+  }
+
+  Future<void> _refreshUsersData() async {
+    // Only refresh if not currently loading to avoid conflicts
+    if (!isLoading) {
+      print('🔄 Refreshing users data due to real-time update...');
+      _loadData();
+    }
   }
 
   Future<void> _loadData() async {
     setState(() => isLoading = true);
     try {
+      print('📊 Loading users data...');
       final [usersData, analyticsData] = await Future.wait([
         SupabaseService.getUsers(limit: 50), // Load all users first, then filter
         SupabaseService.getDashboardAnalytics(),
@@ -1299,9 +1123,10 @@ class _UserManagementState extends State<UserManagement> {
           isLoading = false;
         });
         _applyFilters(); // Apply filters after loading data
+        print('✅ Users data loaded: ${users.length} users found');
       }
     } catch (e) {
-      print('Error loading user data: $e');
+      print('❌ Error loading user data: $e');
       if (mounted) {
         setState(() {
           isLoading = false;
@@ -1366,32 +1191,24 @@ class _UserManagementState extends State<UserManagement> {
                 value: '${users.length}',
                 icon: Icons.people,
                 color: const Color(0xFF8B5CF6),
-                trend: '+${users.length}',
-                trendUp: true,
               ),
               _StatCard(
                 title: 'Active Users',
                 value: '${users.where((u) => u.status.toLowerCase() == 'active').length}',
                 icon: Icons.trending_up,
                 color: const Color(0xFF10B981),
-                trend: '+${users.where((u) => u.status.toLowerCase() == 'active').length}',
-                trendUp: true,
               ),
               _StatCard(
                 title: 'Inactive Users',
                 value: '${users.where((u) => u.status.toLowerCase() == 'inactive').length}',
                 icon: Icons.person_off,
                 color: const Color(0xFF64748B),
-                trend: '${users.where((u) => u.status.toLowerCase() == 'inactive').length}',
-                trendUp: null,
               ),
               _StatCard(
                 title: 'Total Reports',
                 value: '${users.fold(0, (sum, user) => sum + user.reportCount)}',
                 icon: Icons.report_problem,
                 color: const Color(0xFF3B82F6),
-                trend: '+${users.fold(0, (sum, user) => sum + user.reportCount)}',
-                trendUp: true,
               ),
             ],
           ),
@@ -1494,7 +1311,12 @@ class _UserManagementState extends State<UserManagement> {
                       ),
                     ],
                     const SizedBox(height: 16),
-                    _UserTable(users: filteredUsers, isMobile: isMobile, isLoading: isLoading),
+                    _UserTable(
+                      users: filteredUsers, 
+                      isMobile: isMobile, 
+                      isLoading: isLoading,
+                      onRefresh: _loadData,
+                    ),
                   ],
                 );
               },
@@ -1561,86 +1383,6 @@ class _UserManagementState extends State<UserManagement> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  // Moderation Actions Card
-                  Card(
-                    elevation: 0,
-                    color: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      side: BorderSide(color: Colors.grey.shade200),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(Icons.admin_panel_settings, color: Colors.grey.shade600, size: 20),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Moderation Actions',
-                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    color: const Color(0xFF334155),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          _ModerationAction(
-                            icon: Icons.visibility,
-                            label: 'View All Users',
-                            count: '${users.length}',
-                            color: const Color(0xFF3B82F6),
-                            onTap: () {
-                              setState(() {
-                                selectedStatus = 'All';
-                              });
-                              _applyFilters();
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                          _ModerationAction(
-                            icon: Icons.person_search,
-                            label: 'Active Users Only',
-                            count: '${users.where((u) => u.status.toLowerCase() == 'active').length}',
-                            color: const Color(0xFF10B981),
-                            onTap: () {
-                              setState(() {
-                                selectedStatus = 'Active';
-                              });
-                              _applyFilters();
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                          _ModerationAction(
-                            icon: Icons.person_off,
-                            label: 'Inactive Users',
-                            count: '${users.where((u) => u.status.toLowerCase() == 'inactive').length}',
-                            color: const Color(0xFF64748B),
-                            onTap: () {
-                              setState(() {
-                                selectedStatus = 'Inactive';
-                              });
-                              _applyFilters();
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                          _ModerationAction(
-                            icon: Icons.refresh,
-                            label: 'Refresh Data',
-                            count: '',
-                            color: const Color(0xFF6366F1),
-                            onTap: _loadData,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
                 ],
               );
             } else {
@@ -1694,79 +1436,6 @@ class _UserManagementState extends State<UserManagement> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 24),
-                  Expanded(
-                    child: Card(
-                      elevation: 0,
-                      color: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        side: BorderSide(color: Colors.grey.shade200),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Quick Actions',
-                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF334155),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            _ModerationAction(
-                              icon: Icons.visibility,
-                              label: 'View All Users',
-                              count: '${users.length}',
-                              color: const Color(0xFF3B82F6),
-                              onTap: () {
-                                setState(() {
-                                  selectedStatus = 'All';
-                                });
-                                _applyFilters();
-                              },
-                            ),
-                            const SizedBox(height: 12),
-                            _ModerationAction(
-                              icon: Icons.person_search,
-                              label: 'Active Users Only',
-                              count: '${users.where((u) => u.status.toLowerCase() == 'active').length}',
-                              color: const Color(0xFF10B981),
-                              onTap: () {
-                                setState(() {
-                                  selectedStatus = 'Active';
-                                });
-                                _applyFilters();
-                              },
-                            ),
-                            const SizedBox(height: 12),
-                            _ModerationAction(
-                              icon: Icons.person_off,
-                              label: 'Inactive Users',
-                              count: '${users.where((u) => u.status.toLowerCase() == 'inactive').length}',
-                              color: const Color(0xFF64748B),
-                              onTap: () {
-                                setState(() {
-                                  selectedStatus = 'Inactive';
-                                });
-                                _applyFilters();
-                              },
-                            ),
-                            const SizedBox(height: 12),
-                            _ModerationAction(
-                              icon: Icons.refresh,
-                              label: 'Refresh Data',
-                              count: '',
-                              color: const Color(0xFF6366F1),
-                              onTap: _loadData,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
                 ],
               );
             }
@@ -1785,16 +1454,12 @@ class _StatCard extends StatelessWidget {
   final String value;
   final IconData icon;
   final Color color;
-  final String? trend;
-  final bool? trendUp;
 
   const _StatCard({
     required this.title,
     required this.value,
     required this.icon,
     required this.color,
-    this.trend,
-    this.trendUp,
   });
 
   @override
@@ -1827,40 +1492,6 @@ class _StatCard extends StatelessWidget {
                 ),
                 child: Icon(icon, size: 24, color: color),
               ),
-              const Spacer(),
-              if (trend != null) ...[
-                Flexible(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: (trendUp == true ? const Color(0xFF10B981) : const Color(0xFFEF4444)).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          trendUp == true ? Icons.trending_up : Icons.trending_down,
-                          size: 12,
-                          color: trendUp == true ? const Color(0xFF10B981) : const Color(0xFFEF4444),
-                        ),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(
-                            trend!,
-                            style: TextStyle(
-                              color: trendUp == true ? const Color(0xFF10B981) : const Color(0xFFEF4444),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
             ],
           ),
           const SizedBox(height: 16),
@@ -2285,12 +1916,14 @@ class _IssueTable extends StatelessWidget {
   final bool isMobile;
   final bool isLoading;
   final Function(String, String) onStatusUpdate;
+  final VoidCallback? onRefresh;
 
   const _IssueTable({
     required this.issues,
     required this.isMobile,
     required this.isLoading,
     required this.onStatusUpdate,
+    this.onRefresh,
   });
 
   @override
@@ -2341,6 +1974,7 @@ class _IssueTable extends StatelessWidget {
         children: issues.take(10).map((issue) => _IssueCard(
           issue: issue,
           onStatusUpdate: onStatusUpdate,
+          onRefresh: onRefresh,
         )).toList(),
       );
     } else {
@@ -2403,6 +2037,7 @@ class _IssueTable extends StatelessWidget {
                 DataCell(_IssueActions(
                   issue: issue,
                   onStatusUpdate: onStatusUpdate,
+                  onRefresh: onRefresh,
                 )),
               ],
             )).toList(),
@@ -2446,10 +2081,12 @@ class _IssueTable extends StatelessWidget {
 class _IssueCard extends StatelessWidget {
   final Issue issue;
   final Function(String, String) onStatusUpdate;
+  final VoidCallback? onRefresh;
 
   const _IssueCard({
     required this.issue,
     required this.onStatusUpdate,
+    this.onRefresh,
   });
 
   @override
@@ -2538,6 +2175,7 @@ class _IssueCard extends StatelessWidget {
                 _IssueActions(
                   issue: issue,
                   onStatusUpdate: onStatusUpdate,
+                  onRefresh: onRefresh,
                   isCompact: true,
                 ),
               ],
@@ -2620,11 +2258,13 @@ class _StatusBadge extends StatelessWidget {
 class _IssueActions extends StatelessWidget {
   final Issue issue;
   final Function(String, String) onStatusUpdate;
+  final VoidCallback? onRefresh;
   final bool isCompact;
 
   const _IssueActions({
     required this.issue,
     required this.onStatusUpdate,
+    this.onRefresh,
     this.isCompact = false,
   });
 
@@ -2660,7 +2300,7 @@ class _IssueActions extends StatelessWidget {
                   ],
                 ),
               ),
-              if (issue.status != 'In Progress')
+              if (issue.canModifyStatus && issue.status != 'In Progress')
                 const PopupMenuItem(
                   value: 'In Progress',
                   child: Row(
@@ -2671,7 +2311,7 @@ class _IssueActions extends StatelessWidget {
                     ],
                   ),
                 ),
-              if (issue.status != 'Resolved')
+              if (issue.canModifyStatus && issue.status != 'Resolved')
                 const PopupMenuItem(
                   value: 'Resolved',
                   child: Row(
@@ -2697,14 +2337,14 @@ class _IssueActions extends StatelessWidget {
           tooltip: 'View Details',
           color: const Color(0xFF6366F1),
         ),
-        if (issue.status != 'In Progress')
+        if (issue.canModifyStatus && issue.status != 'In Progress')
           IconButton(
             onPressed: () => onStatusUpdate(issue.id, 'In Progress'),
             icon: const Icon(Icons.engineering, size: 18),
             tooltip: 'Set In Progress',
             color: const Color(0xFF3B82F6),
           ),
-        if (issue.status != 'Resolved')
+        if (issue.canModifyStatus && issue.status != 'Resolved')
           IconButton(
             onPressed: () => onStatusUpdate(issue.id, 'Resolved'),
             icon: const Icon(Icons.check_circle, size: 18),
@@ -2967,6 +2607,278 @@ class _IssueActions extends StatelessWidget {
                     ),
                   ),
                 ],
+
+                // Images Section
+                if (issue.allImageUrls.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF8B5CF6).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFF8B5CF6).withOpacity(0.3)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.image,
+                              color: const Color(0xFF8B5CF6),
+                              size: 16,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Images (${issue.allImageUrls.length})',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF8B5CF6),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          height: 120,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: issue.allImageUrls.length,
+                            itemBuilder: (context, index) {
+                              final imageUrl = issue.allImageUrls[index];
+                              return Container(
+                                margin: EdgeInsets.only(
+                                  right: index < issue.allImageUrls.length - 1 ? 8 : 0,
+                                ),
+                                child: GestureDetector(
+                                  onTap: () => _showImageDialog(context, imageUrl, index, issue.allImageUrls),
+                                  child: Container(
+                                    width: 120,
+                                    height: 120,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: Colors.grey.shade300,
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.network(
+                                        imageUrl,
+                                        fit: BoxFit.cover,
+                                        loadingBuilder: (context, child, loadingProgress) {
+                                          if (loadingProgress == null) return child;
+                                          return Container(
+                                            color: Colors.grey.shade100,
+                                            child: Center(
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                color: const Color(0xFF8B5CF6),
+                                                value: loadingProgress.expectedTotalBytes != null
+                                                    ? loadingProgress.cumulativeBytesLoaded /
+                                                        loadingProgress.expectedTotalBytes!
+                                                    : null,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return Container(
+                                            color: Colors.grey.shade100,
+                                            child: Column(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                Icon(
+                                                  Icons.broken_image,
+                                                  color: Colors.grey.shade400,
+                                                  size: 32,
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  'Failed to load',
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    color: Colors.grey.shade500,
+                                                  ),
+                                                  textAlign: TextAlign.center,
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                // Completion Images Section (for resolved issues)
+                if (issue.canUploadCompletionImages) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF10B981).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFF10B981).withOpacity(0.3)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.task_alt,
+                              color: const Color(0xFF10B981),
+                              size: 16,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Completion Images',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF10B981),
+                              ),
+                            ),
+                            const Spacer(),
+                            IconButton(
+                              onPressed: () => _showCompletionImageUpload(context, issue),
+                              icon: Icon(
+                                Icons.add_photo_alternate,
+                                color: const Color(0xFF10B981),
+                                size: 20,
+                              ),
+                              tooltip: 'Upload Completion Images',
+                            ),
+                          ],
+                        ),
+                        if (issue.allCompletedImageUrls.isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            height: 120,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: issue.allCompletedImageUrls.length,
+                              itemBuilder: (context, index) {
+                                final imageUrl = issue.allCompletedImageUrls[index];
+                                return Container(
+                                  margin: EdgeInsets.only(
+                                    right: index < issue.allCompletedImageUrls.length - 1 ? 8 : 0,
+                                  ),
+                                  child: GestureDetector(
+                                    onTap: () => _showImageDialog(context, imageUrl, index, issue.allCompletedImageUrls),
+                                    child: Container(
+                                      width: 120,
+                                      height: 120,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: const Color(0xFF10B981).withOpacity(0.3),
+                                          width: 2,
+                                        ),
+                                      ),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Image.network(
+                                          imageUrl,
+                                          fit: BoxFit.cover,
+                                          loadingBuilder: (context, child, loadingProgress) {
+                                            if (loadingProgress == null) return child;
+                                            return Container(
+                                              color: Colors.grey.shade100,
+                                              child: Center(
+                                                child: CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                  color: const Color(0xFF10B981),
+                                                  value: loadingProgress.expectedTotalBytes != null
+                                                      ? loadingProgress.cumulativeBytesLoaded /
+                                                          loadingProgress.expectedTotalBytes!
+                                                      : null,
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                          errorBuilder: (context, error, stackTrace) {
+                                            return Container(
+                                              color: Colors.grey.shade100,
+                                              child: Column(
+                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                children: [
+                                                  Icon(
+                                                    Icons.broken_image,
+                                                    color: Colors.grey.shade400,
+                                                    size: 32,
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  Text(
+                                                    'Failed to load',
+                                                    style: TextStyle(
+                                                      fontSize: 10,
+                                                      color: Colors.grey.shade500,
+                                                    ),
+                                                    textAlign: TextAlign.center,
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ] else ...[
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF10B981).withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: const Color(0xFF10B981).withOpacity(0.2),
+                                style: BorderStyle.solid,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.info_outline,
+                                  color: const Color(0xFF10B981),
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'No completion images uploaded yet. Click the + button to add images.',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: const Color(0xFF10B981),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -2995,6 +2907,156 @@ class _IssueActions extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  void _showImageDialog(BuildContext context, String imageUrl, int currentIndex, List<String> allImages) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.black,
+        child: Stack(
+          children: [
+            // Image display with zoom and swipe
+            Container(
+              width: double.infinity,
+              height: double.infinity,
+              child: PageView.builder(
+                controller: PageController(initialPage: currentIndex),
+                itemCount: allImages.length,
+                itemBuilder: (context, index) {
+                  return InteractiveViewer(
+                    panEnabled: true,
+                    boundaryMargin: const EdgeInsets.all(20),
+                    minScale: 0.5,
+                    maxScale: 4.0,
+                    child: Center(
+                      child: Image.network(
+                        allImages[index],
+                        fit: BoxFit.contain,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              value: loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
+                                  : null,
+                            ),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          return Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.broken_image,
+                                  color: Colors.white,
+                                  size: 64,
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Failed to load image',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            
+            // Close button
+            Positioned(
+              top: 40,
+              right: 20,
+              child: GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Icon(
+                    Icons.close,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+              ),
+            ),
+            
+            // Image counter (if multiple images)
+            if (allImages.length > 1)
+              Positioned(
+                top: 40,
+                left: 20,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: Text(
+                    '${currentIndex + 1} / ${allImages.length}',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+              
+            // Swipe indicator (if multiple images)
+            if (allImages.length > 1)
+              Positioned(
+                bottom: 40,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      'Swipe to view more images',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showCompletionImageUpload(BuildContext context, Issue issue) {
+    showDialog(
+      context: context,
+      builder: (context) => _CompletionImageUploadDialog(
+        issue: issue,
+        onUploadSuccess: () {
+          // Call the refresh callback if available
+          onRefresh?.call();
+        },
       ),
     );
   }
@@ -3371,11 +3433,13 @@ class _UserTable extends StatelessWidget {
   final List<CivicUser> users;
   final bool isMobile;
   final bool isLoading;
+  final VoidCallback? onRefresh;
 
   const _UserTable({
     required this.users,
     required this.isMobile,
     required this.isLoading,
+    this.onRefresh,
   });
 
   @override
@@ -3409,6 +3473,25 @@ class _UserTable extends StatelessWidget {
                   fontWeight: FontWeight.w500,
                 ),
               ),
+              const SizedBox(height: 8),
+              Text(
+                'Users from the profiles table will appear here.\nReal-time updates enabled.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey.shade500,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: onRefresh,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Refresh'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6366F1),
+                  foregroundColor: Colors.white,
+                ),
+              ),
             ],
           ),
         ),
@@ -3419,8 +3502,9 @@ class _UserTable extends StatelessWidget {
       // Mobile: Card-based layout
       return Column(
         children: users.map((user) => _MobileUserCard(
-          id: user.id,
+          id: user.displayId,
           name: user.name,
+          email: user.email,
           reports: user.reportCount.toString(),
           status: user.capitalizedStatus,
         )).toList(),
@@ -3447,7 +3531,7 @@ class _UserTable extends StatelessWidget {
             ),
           ),
           ...users.map((user) => _UserRow(
-            id: user.id,
+            id: user.displayId,
             name: user.name,
             email: user.email,
             reports: user.reportCount.toString(),
@@ -3738,69 +3822,6 @@ class _VerificationCard extends StatelessWidget {
   }
 }
 
-class _ModerationAction extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String count;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _ModerationAction({
-    required this.icon,
-    required this.label,
-    required this.count,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: color, size: 18),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF334155),
-                ),
-              ),
-            ),
-            if (count.isNotEmpty)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  count,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _ResolutionTimeCard extends StatelessWidget {
   final String category;
   final String avgTime;
@@ -3844,80 +3865,6 @@ class _ResolutionTimeCard extends StatelessWidget {
               fontWeight: FontWeight.w600,
               color: Color(0xFF0F172A),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TrendCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final String change;
-  final bool isPositive;
-  final IconData icon;
-
-  const _TrendCard({
-    required this.title,
-    required this.value,
-    required this.change,
-    required this.isPositive,
-    required this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade200),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 16, color: const Color(0xFF64748B)),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFF64748B),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF0F172A),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              Icon(
-                isPositive ? Icons.trending_up : Icons.trending_down,
-                size: 12,
-                color: isPositive ? const Color(0xFF10B981) : const Color(0xFFEF4444),
-              ),
-              const SizedBox(width: 4),
-              Text(
-                change,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: isPositive ? const Color(0xFF10B981) : const Color(0xFFEF4444),
-                ),
-              ),
-            ],
           ),
         ],
       ),
@@ -4100,12 +4047,14 @@ class _MobileBulkActionButton extends StatelessWidget {
 class _MobileUserCard extends StatelessWidget {
   final String id;
   final String name;
+  final String email;
   final String reports;
   final String status;
 
   const _MobileUserCard({
     required this.id,
     required this.name,
+    required this.email,
     required this.reports,
     required this.status,
   });
@@ -4142,10 +4091,18 @@ class _MobileUserCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      id,
+                      email,
                       style: TextStyle(
                         color: Colors.grey.shade600,
-                        fontSize: 12,
+                        fontSize: 13,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      id,
+                      style: TextStyle(
+                        color: Colors.grey.shade500,
+                        fontSize: 11,
                       ),
                     ),
                   ],
@@ -4214,6 +4171,374 @@ class _MobileUserCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CompletionImageUploadDialog extends StatefulWidget {
+  final Issue issue;
+  final VoidCallback? onUploadSuccess;
+
+  const _CompletionImageUploadDialog({
+    required this.issue,
+    this.onUploadSuccess,
+  });
+
+  @override
+  State<_CompletionImageUploadDialog> createState() => _CompletionImageUploadDialogState();
+}
+
+class _CompletionImageUploadDialogState extends State<_CompletionImageUploadDialog> {
+  List<PlatformFile> selectedFiles = [];
+  bool isUploading = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      title: Row(
+        children: [
+          Icon(
+            Icons.task_alt,
+            color: const Color(0xFF10B981),
+            size: 24,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Upload Completion Images',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF334155),
+              ),
+            ),
+          ),
+        ],
+      ),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Upload images showing the completed work for issue: ${widget.issue.title}',
+              style: TextStyle(
+                fontSize: 14,
+                color: const Color(0xFF64748B),
+              ),
+            ),
+            const SizedBox(height: 16),
+            
+            // File selection area
+            GestureDetector(
+              onTap: isUploading ? null : _pickImages,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: selectedFiles.isNotEmpty 
+                        ? const Color(0xFF10B981) 
+                        : Colors.grey.shade300,
+                    width: 2,
+                    style: BorderStyle.solid,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  color: selectedFiles.isNotEmpty 
+                      ? const Color(0xFF10B981).withOpacity(0.05)
+                      : Colors.grey.shade50,
+                ),
+                child: Column(
+                  children: [
+                    Icon(
+                      selectedFiles.isNotEmpty ? Icons.check_circle : Icons.add_photo_alternate,
+                      size: 48,
+                      color: selectedFiles.isNotEmpty 
+                          ? const Color(0xFF10B981) 
+                          : Colors.grey.shade500,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      selectedFiles.isNotEmpty 
+                          ? '${selectedFiles.length} image(s) selected'
+                          : 'Tap to select images',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: selectedFiles.isNotEmpty 
+                            ? const Color(0xFF10B981) 
+                            : Colors.grey.shade600,
+                      ),
+                    ),
+                    if (selectedFiles.isEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'All image formats supported',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade500,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            
+            // Selected files preview
+            if (selectedFiles.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Text(
+                'Selected Images:',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF334155),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                height: 100,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: selectedFiles.length,
+                  itemBuilder: (context, index) {
+                    final file = selectedFiles[index];
+                    return Container(
+                      margin: EdgeInsets.only(right: index < selectedFiles.length - 1 ? 8 : 0),
+                      child: Stack(
+                        children: [
+                          Container(
+                            width: 100,
+                            height: 100,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.grey.shade300),
+                              color: Colors.grey.shade100,
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: file.bytes != null
+                                  ? Image.memory(
+                                      file.bytes!,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.image,
+                                          color: Colors.grey.shade500,
+                                          size: 32,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          file.name.length > 10 
+                                              ? '${file.name.substring(0, 10)}...'
+                                              : file.name,
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            color: Colors.grey.shade600,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ],
+                                    ),
+                            ),
+                          ),
+                          Positioned(
+                            top: 4,
+                            right: 4,
+                            child: GestureDetector(
+                              onTap: () => _removeImage(index),
+                              child: Container(
+                                padding: const EdgeInsets.all(2),
+                                decoration: BoxDecoration(
+                                  color: Colors.red,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Icon(
+                                  Icons.close,
+                                  color: Colors.white,
+                                  size: 16,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+            
+            // Upload progress
+            if (isUploading) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF3B82F6).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: const Color(0xFF3B82F6),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Uploading images...',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: const Color(0xFF3B82F6),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: isUploading ? null : () => Navigator.pop(context),
+          child: Text(
+            'Cancel',
+            style: TextStyle(
+              color: isUploading ? Colors.grey.shade400 : const Color(0xFF64748B),
+            ),
+          ),
+        ),
+        ElevatedButton.icon(
+          onPressed: isUploading || selectedFiles.isEmpty ? null : _uploadImages,
+          icon: Icon(
+            isUploading ? Icons.hourglass_empty : Icons.cloud_upload,
+            size: 16,
+          ),
+          label: Text(isUploading ? 'Uploading...' : 'Upload'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF10B981),
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _pickImages() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: true,
+        withData: true,
+      );
+
+      if (result != null) {
+        setState(() {
+          selectedFiles = result.files;
+        });
+      }
+    } catch (e) {
+      _showErrorSnackBar('Error selecting images: $e');
+    }
+  }
+
+  void _removeImage(int index) {
+    setState(() {
+      selectedFiles.removeAt(index);
+    });
+  }
+
+  Future<void> _uploadImages() async {
+    if (selectedFiles.isEmpty) return;
+
+    setState(() {
+      isUploading = true;
+    });
+
+    try {
+      // Prepare image data
+      List<Uint8List> imageBytesList = [];
+      List<String> fileNames = [];
+
+      for (final file in selectedFiles) {
+        if (file.bytes != null) {
+          imageBytesList.add(file.bytes!);
+          fileNames.add(file.name);
+        }
+      }
+
+      // Upload images to Supabase Storage
+      final uploadedUrls = await SupabaseService.uploadCompletionImages(imageBytesList, fileNames);
+
+      if (uploadedUrls.isNotEmpty) {
+        // Combine with existing completion images
+        List<String> allCompletionUrls = List.from(widget.issue.allCompletedImageUrls);
+        allCompletionUrls.addAll(uploadedUrls);
+
+        // Update issue with new completion image URLs
+        final success = await SupabaseService.updateIssueCompletionImages(
+          widget.issue.id,
+          allCompletionUrls,
+        );
+
+        if (success) {
+          if (mounted) {
+            Navigator.pop(context);
+            _showSuccessSnackBar('${uploadedUrls.length} completion image(s) uploaded successfully!');
+            // Call the callback to refresh the parent widget
+            widget.onUploadSuccess?.call();
+          }
+        } else {
+          throw Exception('Failed to update issue with completion images');
+        }
+      } else {
+        throw Exception('No images were uploaded successfully');
+      }
+    } catch (e) {
+      _showErrorSnackBar('Upload failed: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          isUploading = false;
+        });
+      }
+    }
+  }
+
+  void _showSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: const Color(0xFF10B981),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: const Color(0xFFEF4444),
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }
