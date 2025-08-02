@@ -146,17 +146,10 @@ It’s ideal for monitoring maintenance issues, assigning tasks to teams, and pl
    git clone https://github.com/shiv7909/TeamGaruda.git
    cd TeamGaruda
 Install dependencies
-
-bash
-Copy
-Edit
 flutter pub get
-Run the Flutter application
-
-bash
-Copy
-Edit
 flutter run
+
+
 If you face any issues during this process, feel free to contact us. We are happy to send the .apk build directly.
 
 
