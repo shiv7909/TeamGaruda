@@ -84,12 +84,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     }
   }
 
-  static final List<Widget> _pages = [
-    const DashboardOverview(),
-    const IssueManagement(),
-    const Analytics(),
-    const Profile(),
-  ];
+  static final List<Widget> _pages = [const IssueManagement(), const Profile()];
 
   @override
   Widget build(BuildContext context) {
@@ -103,7 +98,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   ? null
                   : AppBar(
                     title: const Text(
-                      'Admin Dashboard',
+                      'Hello!',
                       style: TextStyle(fontWeight: FontWeight.w600),
                     ),
                     backgroundColor: Colors.white,
@@ -151,19 +146,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
     onTap: (index) => setState(() => _selectedIndex = index),
     items: const [
       BottomNavigationBarItem(
-        icon: Icon(Icons.dashboard_outlined),
-        activeIcon: Icon(Icons.dashboard),
-        label: 'Dashboard',
-      ),
-      BottomNavigationBarItem(
         icon: Icon(Icons.report_problem_outlined),
         activeIcon: Icon(Icons.report_problem),
         label: 'Issues',
-      ),
-      BottomNavigationBarItem(
-        icon: Icon(Icons.analytics_outlined),
-        activeIcon: Icon(Icons.analytics),
-        label: 'Analytics',
       ),
       BottomNavigationBarItem(
         icon: Icon(Icons.person_outline),
@@ -231,19 +216,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
     ),
     destinations: const [
       NavigationRailDestination(
-        icon: Icon(Icons.dashboard_outlined),
-        selectedIcon: Icon(Icons.dashboard),
-        label: Text('Dashboard'),
-      ),
-      NavigationRailDestination(
         icon: Icon(Icons.report_problem_outlined),
         selectedIcon: Icon(Icons.report_problem),
         label: Text('Issues'),
-      ),
-      NavigationRailDestination(
-        icon: Icon(Icons.analytics_outlined),
-        selectedIcon: Icon(Icons.analytics),
-        label: Text('Analytics'),
       ),
       NavigationRailDestination(
         icon: Icon(Icons.person_outline),
@@ -833,7 +808,7 @@ class _IssueManagementState extends State<IssueManagement> {
   List<Issue> filteredIssues = [];
   DashboardAnalytics? analytics;
   bool isLoading = true;
-  String selectedStatus = 'All';
+  String selectedStatus = 'All'; // Changed from 'approved' to 'All'
 
   @override
   void initState() {
@@ -887,17 +862,20 @@ class _IssueManagementState extends State<IssueManagement> {
     setState(() {
       filteredIssues =
           issues.where((issue) {
-            if (selectedStatus == 'All') return true;
-            
+            if (selectedStatus == 'All') {
+              // Show all issues
+              return true;
+            }
+
             final issueStatus = issue.status.toLowerCase();
             final filterStatus = selectedStatus.toLowerCase();
-            
+
             // Handle status matching with citizen-facing statuses
             if (filterStatus == 'reported' || filterStatus == 'under review') {
               // Both "reported" and "under review" represent early stage statuses
               return issueStatus == 'reported' || issueStatus == 'under review';
             }
-            
+
             return issueStatus == filterStatus;
           }).toList();
     });
@@ -952,7 +930,7 @@ class _IssueManagementState extends State<IssueManagement> {
             ),
             const SizedBox(width: 12),
             Text(
-              'Issue Management',
+              'Issues',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: const Color(0xFF0F172A),
@@ -967,84 +945,7 @@ class _IssueManagementState extends State<IssueManagement> {
           ],
         ),
         const SizedBox(height: 24),
-        // Quick Action Cards with real data
-        if (isLoading)
-          const Center(child: CircularProgressIndicator())
-        else if (analytics != null)
-          Wrap(
-            spacing: 16,
-            runSpacing: 16,
-            children: [
-              _QuickActionCard(
-                title: 'Reported',
-                count:
-                    '${issues.where((i) => i.status.toLowerCase() == 'reported').length}',
-                icon: Icons.pending_actions,
-                color: const Color(0xFFF59E0B),
-                onTap: () {
-                  setState(() {
-                    selectedStatus = 'reported';
-                    _applyFilters();
-                  });
-                },
-              ),
-              _QuickActionCard(
-                title: 'Under Review',
-                count:
-                    '${issues.where((i) => i.status.toLowerCase() == 'under review').length}',
-                icon: Icons.visibility,
-                color: const Color(0xFF8B5CF6),
-                onTap: () {
-                  setState(() {
-                    selectedStatus = 'under review';
-                    _applyFilters();
-                  });
-                },
-              ),
-              _QuickActionCard(
-                title: 'In Progress',
-                count:
-                    '${issues.where((i) => i.status.toLowerCase() == 'in progress').length}',
-                icon: Icons.engineering,
-                color: const Color(0xFF3B82F6),
-                onTap: () {
-                  setState(() {
-                    selectedStatus = 'in progress';
-                    _applyFilters();
-                  });
-                },
-              ),
-              _QuickActionCard(
-                title: 'Completed',
-                count:
-                    '${issues.where((i) => i.status.toLowerCase() == 'completed').length}',
-                icon: Icons.check_circle,
-                color: const Color(0xFF10B981),
-                onTap: () {
-                  setState(() {
-                    selectedStatus = 'completed';
-                    _applyFilters();
-                  });
-                },
-              ),
-              _QuickActionCard(
-                title: 'Total Issues',
-                count: '${issues.length}',
-                icon: Icons.assignment,
-                color: const Color(0xFF8B5CF6),
-                onTap: () {
-                  setState(() {
-                    selectedStatus = 'All';
-                    _applyFilters();
-                  });
-                },
-              ),
-            ],
-          )
-        else
-          const Center(child: Text('Failed to load statistics')),
-        const SizedBox(height: 32),
-        // Recent Issues Table - Mobile vs Desktop Layout
+        // Issues List
         Card(
           elevation: 0,
           color: Colors.white,
@@ -1070,7 +971,7 @@ class _IssueManagementState extends State<IssueManagement> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'Issues (${filteredIssues.length} of ${issues.length})',
+                            'All Issues (${filteredIssues.length})',
                             style: Theme.of(
                               context,
                             ).textTheme.titleLarge?.copyWith(
@@ -1082,73 +983,6 @@ class _IssueManagementState extends State<IssueManagement> {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    // Mobile vs Desktop Filter Layout
-                    if (isMobile) ...[
-                      // Mobile: Vertical stack layout
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _FilterDropdown(
-                            label: 'Status',
-                            value: selectedStatus,
-                            items: const [
-                              'All',
-                              'reported',
-                              'under review',
-                              'in progress',
-                              'completed',
-                            ],
-                            onChanged: (value) {
-                              setState(() {
-                                selectedStatus = value ?? 'All';
-                                _applyFilters();
-                              });
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                          SizedBox(
-                            width: double.infinity,
-                            child: TextButton.icon(
-                              onPressed: _loadData,
-                              icon: const Icon(Icons.refresh, size: 16),
-                              label: const Text('Refresh'),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ] else ...[
-                      // Desktop: Horizontal wrap layout
-                      Wrap(
-                        spacing: 12,
-                        runSpacing: 8,
-                        alignment: WrapAlignment.start,
-                        children: [
-                          _FilterDropdown(
-                            label: 'Status',
-                            value: selectedStatus,
-                            items: const [
-                              'All',
-                              'reported',
-                              'under review',
-                              'in progress',
-                              'completed',
-                            ],
-                            onChanged: (value) {
-                              setState(() {
-                                selectedStatus = value ?? 'All';
-                                _applyFilters();
-                              });
-                            },
-                          ),
-                          TextButton.icon(
-                            onPressed: _loadData,
-                            icon: const Icon(Icons.refresh, size: 16),
-                            label: const Text('Refresh'),
-                          ),
-                        ],
-                      ),
-                    ],
-                    const SizedBox(height: 16),
                     _IssueTable(
                       issues: filteredIssues,
                       isMobile: isMobile,
@@ -1159,46 +993,6 @@ class _IssueManagementState extends State<IssueManagement> {
                   ],
                 );
               },
-            ),
-          ),
-        ),
-        const SizedBox(height: 24),
-        // Summary Statistics Card
-        Card(
-          elevation: 0,
-          color: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: Colors.grey.shade200),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.analytics,
-                      color: Colors.grey.shade600,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Issue Summary',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF334155),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                if (isLoading)
-                  const Center(child: CircularProgressIndicator())
-                else
-                  _IssueSummaryStats(issues: filteredIssues),
-              ],
             ),
           ),
         ),
@@ -1599,76 +1393,6 @@ class _IssuesDonutChart extends StatelessWidget {
 // ... The rest of your file from _QuickActionCard downwards remains the same ...
 
 // --- CIVICTRACK SPECIFIC WIDGETS ---
-class _QuickActionCard extends StatelessWidget {
-  final String title;
-  final String count;
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _QuickActionCard({
-    required this.title,
-    required this.count,
-    required this.icon,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, color: color, size: 24),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              count,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 12,
-                color: Color(0xFF64748B),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _IssueTable extends StatelessWidget {
   final List<Issue> issues;
   final bool isMobile;
@@ -2017,6 +1741,10 @@ class _StatusBadge extends StatelessWidget {
         color = const Color(0xFF10B981);
         icon = Icons.check_circle;
         break;
+      case 'approved':
+        color = const Color(0xFF059669);
+        icon = Icons.approval;
+        break;
       default:
         color = const Color(0xFF64748B);
         icon = Icons.help_outline;
@@ -2061,71 +1789,8 @@ class _IssueActions extends StatelessWidget {
     this.isCompact = false,
   });
 
-  // Get the next status in the workflow
-  String? _getNextStatus() {
-    switch (issue.status.toLowerCase()) {
-      case 'reported':
-        return 'under review';
-      case 'under review':
-        return 'in progress';
-      case 'in progress':
-        return 'completed';
-      case 'completed':
-        return null; // No next status
-      default:
-        return null;
-    }
-  }
-
-  // Get the appropriate icon for the next status
-  IconData _getNextStatusIcon() {
-    final nextStatus = _getNextStatus();
-    switch (nextStatus) {
-      case 'under review':
-        return Icons.visibility;
-      case 'in progress':
-        return Icons.engineering;
-      case 'completed':
-        return Icons.check_circle;
-      default:
-        return Icons.help_outline;
-    }
-  }
-
-  // Get the appropriate color for the next status
-  Color _getNextStatusColor() {
-    final nextStatus = _getNextStatus();
-    switch (nextStatus) {
-      case 'under review':
-        return const Color(0xFF8B5CF6);
-      case 'in progress':
-        return const Color(0xFF3B82F6);
-      case 'completed':
-        return const Color(0xFF10B981);
-      default:
-        return const Color(0xFF64748B);
-    }
-  }
-
-  // Get the tooltip/label for the next status
-  String _getNextStatusLabel() {
-    final nextStatus = _getNextStatus();
-    switch (nextStatus) {
-      case 'under review':
-        return 'Set Under Review';
-      case 'in progress':
-        return 'Set In Progress';
-      case 'completed':
-        return 'Mark Completed';
-      default:
-        return 'Update Status';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final nextStatus = _getNextStatus();
-
     if (isCompact) {
       return Row(
         mainAxisSize: MainAxisSize.min,
@@ -2136,55 +1801,63 @@ class _IssueActions extends StatelessWidget {
             tooltip: 'View Details',
             color: const Color(0xFF6366F1),
           ),
-          if (nextStatus != null)
-            PopupMenuButton<String>(
-              icon: Icon(Icons.more_horiz, size: 20, color: Colors.grey.shade600),
-              onSelected: (action) {
-                if (action == 'View Details') {
-                  _showIssueDetails(context);
-                } else {
-                  onStatusUpdate(issue.id, action);
-                }
-              },
-              itemBuilder:
-                  (context) => [
+          PopupMenuButton<String>(
+            icon: Icon(Icons.more_horiz, size: 20, color: Colors.grey.shade600),
+            onSelected: (action) {
+              if (action == 'View Details') {
+                _showIssueDetails(context);
+              } else {
+                onStatusUpdate(issue.id, action);
+              }
+            },
+            itemBuilder:
+                (context) => [
+                  const PopupMenuItem(
+                    value: 'View Details',
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.visibility,
+                          size: 16,
+                          color: Color(0xFF6366F1),
+                        ),
+                        SizedBox(width: 8),
+                        Text('View Details'),
+                      ],
+                    ),
+                  ),
+                  if (issue.canModifyStatus && issue.status != 'In Progress')
                     const PopupMenuItem(
-                      value: 'View Details',
+                      value: 'In Progress',
                       child: Row(
                         children: [
                           Icon(
-                            Icons.visibility,
+                            Icons.engineering,
                             size: 16,
-                            color: Color(0xFF6366F1),
+                            color: Color(0xFF3B82F6),
                           ),
                           SizedBox(width: 8),
-                          Text('View Details'),
+                          Text('Set In Progress'),
                         ],
                       ),
                     ),
-                    PopupMenuItem(
-                      value: nextStatus,
+                  if (issue.canModifyStatus && issue.status != 'completed')
+                    const PopupMenuItem(
+                      value: 'completed',
                       child: Row(
                         children: [
                           Icon(
-                            _getNextStatusIcon(),
+                            Icons.check_circle,
                             size: 16,
-                            color: _getNextStatusColor(),
+                            color: Color(0xFF10B981),
                           ),
                           SizedBox(width: 8),
-                          Text(_getNextStatusLabel()),
+                          Text('Mark Completed'),
                         ],
                       ),
                     ),
-                  ],
-            )
-          else
-            IconButton(
-              onPressed: () => _showIssueDetails(context),
-              icon: const Icon(Icons.more_horiz, size: 20),
-              tooltip: 'View Details',
-              color: Colors.grey.shade600,
-            ),
+                ],
+          ),
         ],
       );
     }
@@ -2198,12 +1871,19 @@ class _IssueActions extends StatelessWidget {
           tooltip: 'View Details',
           color: const Color(0xFF6366F1),
         ),
-        if (nextStatus != null)
+        if (issue.canModifyStatus && issue.status != 'in progress')
           IconButton(
-            onPressed: () => onStatusUpdate(issue.id, nextStatus),
-            icon: Icon(_getNextStatusIcon(), size: 18),
-            tooltip: _getNextStatusLabel(),
-            color: _getNextStatusColor(),
+            onPressed: () => onStatusUpdate(issue.id, 'in progress'),
+            icon: const Icon(Icons.engineering, size: 18),
+            tooltip: 'Set In Progress',
+            color: const Color(0xFF3B82F6),
+          ),
+        if (issue.canModifyStatus && issue.status != 'completed')
+          IconButton(
+            onPressed: () => onStatusUpdate(issue.id, 'completed'),
+            icon: const Icon(Icons.check_circle, size: 18),
+            tooltip: 'Mark Completed',
+            color: const Color(0xFF10B981),
           ),
       ],
     );
@@ -3172,123 +2852,13 @@ class _DetailItem extends StatelessWidget {
   }
 }
 
-class _IssueSummaryStats extends StatelessWidget {
-  final List<Issue> issues;
-
-  const _IssueSummaryStats({required this.issues});
-
-  @override
-  Widget build(BuildContext context) {
-    final categoryStats = <String, int>{};
-    final statusStats = <String, int>{};
-
-    for (final issue in issues) {
-      categoryStats[issue.issueType] =
-          (categoryStats[issue.issueType] ?? 0) + 1;
-      statusStats[issue.status] = (statusStats[issue.status] ?? 0) + 1;
-    }
-
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _StatSection(
-                title: 'By Category',
-                stats: categoryStats,
-                colorMap: {
-                  'Road Damage': const Color(0xFF3B82F6),
-                  'Water Leaks': const Color(0xFF06B6D4),
-                  'Street Lighting': const Color(0xFFF59E0B),
-                  'Waste Management': const Color(0xFF10B981),
-                  'Safety Issues': const Color(0xFFEF4444),
-                },
-              ),
-            ),
-            const SizedBox(width: 32),
-            Expanded(
-              child: _StatSection(
-                title: 'By Status',
-                stats: statusStats,
-                colorMap: {
-                  'Report Submitted': const Color(0xFFF59E0B),
-                  'In Progress': const Color(0xFF3B82F6),
-                  'Resolved': const Color(0xFF10B981),
-                },
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _StatSection extends StatelessWidget {
-  final String title;
-  final Map<String, int> stats;
-  final Map<String, Color> colorMap;
-
-  const _StatSection({
-    required this.title,
-    required this.stats,
-    required this.colorMap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 12),
-        ...stats.entries.map(
-          (entry) => Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              children: [
-                Container(
-                  width: 12,
-                  height: 12,
-                  decoration: BoxDecoration(
-                    color: colorMap[entry.key] ?? Colors.grey,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(entry.key, style: const TextStyle(fontSize: 13)),
-                ),
-                Text(
-                  '${entry.value}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _FilterDropdown extends StatelessWidget {
   final String label;
-  final String? value;
   final List<String> items;
   final Function(String?) onChanged;
 
   const _FilterDropdown({
     required this.label,
-    this.value,
     required this.items,
     required this.onChanged,
   });
@@ -3303,7 +2873,6 @@ class _FilterDropdown extends StatelessWidget {
         color: Colors.white,
       ),
       child: DropdownButton<String>(
-        value: value,
         hint: Text(
           label,
           style: TextStyle(

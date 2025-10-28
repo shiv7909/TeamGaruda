@@ -101,7 +101,7 @@ class _ProfileState extends State<Profile> {
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  'Department Profile',
+                  'Worker Profile',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
