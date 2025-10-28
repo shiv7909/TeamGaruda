@@ -118,7 +118,10 @@ class SupabaseService {
       var query = _client.from('issues').select('*');
 
       if (status != null && status != 'All') {
-        query = query.eq('status', status.toLowerCase());
+        // Keep exact case for 'Spam' status, convert others to lowercase for consistency
+        String filterStatus =
+            (status == 'Spam') ? 'Spam' : status.toLowerCase();
+        query = query.eq('status', filterStatus);
       }
 
       if (category != null && category != 'All') {
@@ -627,7 +630,12 @@ class SupabaseService {
     String issueId,
     String newStatus,
   ) async {
+    print(
+      '🔄 updateIssueStatusRestricted called with issueId: $issueId, newStatus: $newStatus',
+    );
     try {
+      print('Updating issue $issueId to status: $newStatus');
+
       // First check current status
       final response =
           await _client
@@ -660,20 +668,43 @@ class SupabaseService {
         case 'completed':
           statusDescription = 'RESOLVED';
           break;
+        case 'approved':
+          statusDescription = 'APPROVED';
+          break;
+        case 'spam':
+          statusDescription = 'SPAM';
+          break;
         default:
           statusDescription = 'SUBMITTED';
       }
+
+      print(
+        'Mapped status "$newStatus" to statusDescription: $statusDescription',
+      );
 
       await _client
           .from('issues')
           .update({
             'status': newStatus,
-            'status_description': statusDescription,
+            // 'status_description': statusDescription, // Temporarily commented out to test
           })
           .eq('id', issueId);
+      print('Successfully updated issue $issueId');
       return true;
     } catch (e) {
       print('Error updating issue status: $e');
+      return false;
+    }
+  }
+
+  // Delete issue from database
+  static Future<bool> deleteIssue(String issueId) async {
+    try {
+      await _client.from('issues').delete().eq('id', issueId);
+      print('Successfully deleted issue $issueId');
+      return true;
+    } catch (e) {
+      print('Error deleting issue: $e');
       return false;
     }
   }
@@ -745,7 +776,10 @@ class SupabaseService {
       query = query.eq('department', departmentName);
 
       if (status != null && status != 'All') {
-        query = query.eq('status', status.toLowerCase());
+        // Keep exact case for 'Spam' status, convert others to lowercase for consistency
+        String filterStatus =
+            (status == 'Spam') ? 'Spam' : status.toLowerCase();
+        query = query.eq('status', filterStatus);
       }
 
       final response = await query

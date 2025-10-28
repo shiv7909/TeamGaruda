@@ -8,6 +8,9 @@ import 'models/analytics.dart';
 import 'models/issue.dart';
 import 'services/auth_service.dart';
 import 'profile.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 // Main Responsive Scaffold
 class AdminDashboard extends StatefulWidget {
@@ -201,7 +204,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
           Icon(Icons.remove_red_eye, size: 32, color: Color(0xFF6366F1)),
           SizedBox(height: 8),
           Text(
-            'Third Eye',
+            'Sentinel',
             style: TextStyle(
               color: Color(0xFF6366F1),
               fontWeight: FontWeight.bold,
@@ -888,26 +891,32 @@ class _IssueManagementState extends State<IssueManagement> {
       filteredIssues =
           issues.where((issue) {
             if (selectedStatus == 'All') return true;
-            
+
             final issueStatus = issue.status.toLowerCase();
             final filterStatus = selectedStatus.toLowerCase();
-            
+
             // Handle status matching with citizen-facing statuses
             if (filterStatus == 'reported' || filterStatus == 'under review') {
               // Both "reported" and "under review" represent early stage statuses
               return issueStatus == 'reported' || issueStatus == 'under review';
             }
-            
+
             return issueStatus == filterStatus;
           }).toList();
     });
   }
 
   Future<void> _updateIssueStatus(String issueId, String newStatus) async {
+    print(
+      '🎯 _updateIssueStatus called with issueId: $issueId, newStatus: $newStatus',
+    );
     try {
       final success = await SupabaseService.updateIssueStatusRestricted(
         issueId,
         newStatus,
+      );
+      print(
+        '📡 SupabaseService.updateIssueStatusRestricted returned: $success',
       );
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -921,6 +930,7 @@ class _IssueManagementState extends State<IssueManagement> {
         throw Exception('Cannot change status back from resolved');
       }
     } catch (e) {
+      print('❌ Error in _updateIssueStatus: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error updating status: $e'),
@@ -928,6 +938,13 @@ class _IssueManagementState extends State<IssueManagement> {
         ),
       );
     }
+  }
+
+  void _showSpamReportsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => const SpamReportsDialog(),
+    );
   }
 
   @override
@@ -959,6 +976,19 @@ class _IssueManagementState extends State<IssueManagement> {
               ),
             ),
             const Spacer(),
+            ElevatedButton.icon(
+              onPressed: () => _showSpamReportsDialog(context),
+              icon: const Icon(Icons.report_problem, size: 16),
+              label: const Text('Spam Reports'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFEF4444),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
             IconButton(
               onPressed: _loadData,
               icon: const Icon(Icons.refresh),
@@ -2013,9 +2043,17 @@ class _StatusBadge extends StatelessWidget {
         color = const Color(0xFF3B82F6);
         icon = Icons.engineering;
         break;
-      case 'completed':
+      case 'approved':
         color = const Color(0xFF10B981);
-        icon = Icons.check_circle;
+        icon = Icons.check;
+        break;
+      case 'completed':
+        color = const Color(0xFF059669);
+        icon = Icons.task_alt;
+        break;
+      case 'spam':
+        color = const Color(0xFFEF4444);
+        icon = Icons.warning_amber;
         break;
       default:
         color = const Color(0xFF64748B);
@@ -2067,8 +2105,6 @@ class _IssueActions extends StatelessWidget {
       case 'reported':
         return 'under review';
       case 'under review':
-        return 'in progress';
-      case 'in progress':
         return 'completed';
       case 'completed':
         return null; // No next status
@@ -2124,71 +2160,6 @@ class _IssueActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final nextStatus = _getNextStatus();
-
-    if (isCompact) {
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            onPressed: () => _showIssueDetails(context),
-            icon: const Icon(Icons.visibility, size: 18),
-            tooltip: 'View Details',
-            color: const Color(0xFF6366F1),
-          ),
-          if (nextStatus != null)
-            PopupMenuButton<String>(
-              icon: Icon(Icons.more_horiz, size: 20, color: Colors.grey.shade600),
-              onSelected: (action) {
-                if (action == 'View Details') {
-                  _showIssueDetails(context);
-                } else {
-                  onStatusUpdate(issue.id, action);
-                }
-              },
-              itemBuilder:
-                  (context) => [
-                    const PopupMenuItem(
-                      value: 'View Details',
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.visibility,
-                            size: 16,
-                            color: Color(0xFF6366F1),
-                          ),
-                          SizedBox(width: 8),
-                          Text('View Details'),
-                        ],
-                      ),
-                    ),
-                    PopupMenuItem(
-                      value: nextStatus,
-                      child: Row(
-                        children: [
-                          Icon(
-                            _getNextStatusIcon(),
-                            size: 16,
-                            color: _getNextStatusColor(),
-                          ),
-                          SizedBox(width: 8),
-                          Text(_getNextStatusLabel()),
-                        ],
-                      ),
-                    ),
-                  ],
-            )
-          else
-            IconButton(
-              onPressed: () => _showIssueDetails(context),
-              icon: const Icon(Icons.more_horiz, size: 20),
-              tooltip: 'View Details',
-              color: Colors.grey.shade600,
-            ),
-        ],
-      );
-    }
-
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -2198,14 +2169,552 @@ class _IssueActions extends StatelessWidget {
           tooltip: 'View Details',
           color: const Color(0xFF6366F1),
         ),
-        if (nextStatus != null)
-          IconButton(
-            onPressed: () => onStatusUpdate(issue.id, nextStatus),
-            icon: Icon(_getNextStatusIcon(), size: 18),
-            tooltip: _getNextStatusLabel(),
-            color: _getNextStatusColor(),
-          ),
+        PopupMenuButton<String>(
+          icon: Icon(Icons.more_horiz, size: 20, color: Colors.grey.shade600),
+          onSelected: (action) {
+            print('🔥 Admin action selected: $action for issue ${issue.id}');
+            switch (action) {
+              case 'Mark for Review':
+                print('📝 Calling onStatusUpdate with Under Review');
+                onStatusUpdate(issue.id, 'Under Review');
+                break;
+              case 'Approved':
+                print('✅ Calling onStatusUpdate with Approved');
+                onStatusUpdate(issue.id, 'Approved');
+                break;
+              case 'Mark as Spam':
+                print('🗑️ Showing spam confirmation dialog');
+                _showSpamConfirmationDialog(context);
+                break;
+              case 'Generate Department Report':
+                print('📄 Generating department report for issue ${issue.id}');
+                _generateOfficialReport(context, issue);
+                break;
+              default:
+                // Handle workflow actions
+                print('🔄 Calling onStatusUpdate with $action');
+                onStatusUpdate(issue.id, action);
+            }
+          },
+          itemBuilder:
+              (context) => [
+                const PopupMenuItem(
+                  value: 'Mark for Review',
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.timer,
+                        size: 16,
+                        color: Color.fromARGB(255, 246, 179, 92),
+                      ),
+                      SizedBox(width: 8),
+                      Text('Mark for Review'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'Approved',
+                  child: Row(
+                    children: [
+                      Icon(Icons.check, size: 16, color: Color(0xFF10B981)),
+                      SizedBox(width: 8),
+                      Text('Approved'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'Mark as Spam',
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.delete_forever,
+                        size: 16,
+                        color: Color(0xFFEF4444),
+                      ),
+                      SizedBox(width: 8),
+                      Text('Mark as Spam'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'Generate Department Report',
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.description,
+                        size: 16,
+                        color: Color(0xFF6366F1),
+                      ),
+                      SizedBox(width: 8),
+                      Text('Generate Department Report'),
+                    ],
+                  ),
+                ),
+                // Add workflow actions if applicable
+                if (_getNextStatus() != null)
+                  PopupMenuItem(
+                    value: _getNextStatus(),
+                    child: Row(
+                      children: [
+                        Icon(
+                          _getNextStatusIcon(),
+                          size: 16,
+                          color: _getNextStatusColor(),
+                        ),
+                        SizedBox(width: 8),
+                        Text(_getNextStatusLabel()),
+                      ],
+                    ),
+                  ),
+              ],
+        ),
       ],
+    );
+  }
+
+  void _showSpamConfirmationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: Row(
+              children: [
+                Icon(Icons.warning, color: const Color(0xFFEF4444), size: 24),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Mark as Spam',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF334155),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Are you sure you want to mark this issue as spam and delete it?',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: const Color(0xFF64748B),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Issue: ${issue.title}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF334155),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF2F2),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFFECACA)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.warning_amber,
+                        color: const Color(0xFFEF4444),
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'This action cannot be undone. The issue will be permanently deleted from the database.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: const Color(0xFFDC2626),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(color: const Color(0xFF64748B)),
+                ),
+              ),
+              ElevatedButton.icon(
+                onPressed: () {
+                  print(
+                    '🗑️ Spam confirmation accepted, calling onStatusUpdate with Spam',
+                  );
+                  Navigator.pop(context); // Close confirmation dialog
+                  onStatusUpdate(issue.id, 'Spam');
+                },
+                icon: const Icon(Icons.delete_forever, size: 16),
+                label: const Text('Mark as Spam'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFEF4444),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ],
+          ),
+    );
+  }
+
+  void _generateOfficialReport(BuildContext context, Issue issue) async {
+    try {
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder:
+            (context) => const AlertDialog(
+              content: Row(
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(width: 16),
+                  Text('Generating department report...'),
+                ],
+              ),
+            ),
+      );
+
+      // Create PDF document
+      final pdf = pw.Document();
+
+      // Load images
+      final imageWidgets = <pw.Widget>[];
+      for (final imageUrl in issue.allImageUrls) {
+        try {
+          final image = await networkImage(imageUrl);
+          imageWidgets.add(
+            pw.Container(
+              margin: const pw.EdgeInsets.only(bottom: 10),
+              child: pw.Image(image, height: 150, fit: pw.BoxFit.contain),
+            ),
+          );
+        } catch (e) {
+          print('Failed to load image: $imageUrl, error: $e');
+          // Add placeholder for failed images
+          imageWidgets.add(
+            pw.Container(
+              height: 150,
+              alignment: pw.Alignment.center,
+              decoration: pw.BoxDecoration(
+                border: pw.Border.all(color: PdfColors.grey),
+              ),
+              child: pw.Text(
+                'Image failed to load',
+                style: const pw.TextStyle(fontSize: 12),
+              ),
+            ),
+          );
+        }
+      }
+
+      // Create barcode
+      final barcodeData = issue.id;
+      final barcode = pw.BarcodeWidget(
+        barcode: pw.Barcode.code128(),
+        data: barcodeData,
+        width: 200,
+        height: 80,
+      );
+
+      // Build PDF content
+      pdf.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.all(32),
+          build:
+              (context) => [
+                // Header
+                pw.Container(
+                  padding: const pw.EdgeInsets.all(16),
+                  decoration: pw.BoxDecoration(
+                    color: PdfColors.blue,
+                    borderRadius: pw.BorderRadius.circular(8),
+                  ),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(
+                        AuthService.currentDepartment?.department ??
+                            'DEPARTMENT REPORT',
+                        style: pw.TextStyle(
+                          fontSize: 24,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColors.white,
+                        ),
+                      ),
+                      pw.SizedBox(height: 8),
+                      pw.Text(
+                        'Third Eye Citizen Reporting System',
+                        style: pw.TextStyle(
+                          fontSize: 16,
+                          color: PdfColors.white,
+                        ),
+                      ),
+                      pw.SizedBox(height: 4),
+                      pw.Text(
+                        'Generated on: ${DateTime.now().toString()}',
+                        style: pw.TextStyle(
+                          fontSize: 12,
+                          color: PdfColors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                pw.SizedBox(height: 20),
+
+                // Issue Details Section
+                pw.Container(
+                  padding: const pw.EdgeInsets.all(16),
+                  decoration: pw.BoxDecoration(
+                    border: pw.Border.all(color: PdfColors.grey300),
+                    borderRadius: pw.BorderRadius.circular(8),
+                  ),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(
+                        'ISSUE DETAILS',
+                        style: pw.TextStyle(
+                          fontSize: 18,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColors.blue900,
+                        ),
+                      ),
+                      pw.Divider(),
+                      pw.SizedBox(height: 12),
+
+                      // Issue ID and Barcode
+                      pw.Row(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          pw.Expanded(
+                            child: pw.Column(
+                              crossAxisAlignment: pw.CrossAxisAlignment.start,
+                              children: [
+                                pw.Text(
+                                  'Issue ID: ${issue.id}',
+                                  style: pw.TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: pw.FontWeight.bold,
+                                  ),
+                                ),
+                                pw.SizedBox(height: 8),
+                                pw.Text(
+                                  'Title: ${issue.title}',
+                                  style: const pw.TextStyle(fontSize: 14),
+                                ),
+                                pw.SizedBox(height: 4),
+                                pw.Text(
+                                  'Category: ${issue.issueType}',
+                                  style: const pw.TextStyle(fontSize: 14),
+                                ),
+                                pw.SizedBox(height: 4),
+                                pw.Text(
+                                  'Status: ${issue.status}',
+                                  style: const pw.TextStyle(fontSize: 14),
+                                ),
+                                pw.SizedBox(height: 4),
+                                pw.Text(
+                                  'Created: ${issue.createdAt.toString()}',
+                                  style: const pw.TextStyle(fontSize: 14),
+                                ),
+                              ],
+                            ),
+                          ),
+                          pw.Container(
+                            padding: const pw.EdgeInsets.all(8),
+                            decoration: pw.BoxDecoration(
+                              border: pw.Border.all(color: PdfColors.grey),
+                              borderRadius: pw.BorderRadius.circular(4),
+                            ),
+                            child: pw.Column(
+                              children: [
+                                pw.Text(
+                                  'Issue Barcode',
+                                  style: const pw.TextStyle(fontSize: 10),
+                                ),
+                                pw.SizedBox(height: 2),
+                                barcode,
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      // Location Information
+                      if (issue.latitude != null &&
+                          issue.longitude != null) ...[
+                        pw.SizedBox(height: 12),
+                        pw.Text(
+                          'Location Information:',
+                          style: pw.TextStyle(
+                            fontSize: 14,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                        pw.SizedBox(height: 4),
+                        pw.Text(
+                          'Latitude: ${issue.latitude!.toStringAsFixed(6)}',
+                          style: const pw.TextStyle(fontSize: 12),
+                        ),
+                        pw.Text(
+                          'Longitude: ${issue.longitude!.toStringAsFixed(6)}',
+                          style: const pw.TextStyle(fontSize: 12),
+                        ),
+                      ],
+
+                      // Description
+                      if (issue.description.isNotEmpty) ...[
+                        pw.SizedBox(height: 12),
+                        pw.Text(
+                          'Description:',
+                          style: pw.TextStyle(
+                            fontSize: 14,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                        pw.SizedBox(height: 4),
+                        pw.Text(
+                          issue.description,
+                          style: const pw.TextStyle(fontSize: 12),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+
+                pw.SizedBox(height: 20),
+
+                // Images Section
+                if (imageWidgets.isNotEmpty) ...[
+                  pw.Container(
+                    padding: const pw.EdgeInsets.all(16),
+                    decoration: pw.BoxDecoration(
+                      border: pw.Border.all(color: PdfColors.grey300),
+                      borderRadius: pw.BorderRadius.circular(8),
+                    ),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text(
+                          'ATTACHED IMAGES (${imageWidgets.length})',
+                          style: pw.TextStyle(
+                            fontSize: 18,
+                            fontWeight: pw.FontWeight.bold,
+                            color: PdfColors.blue900,
+                          ),
+                        ),
+                        pw.Divider(),
+                        pw.SizedBox(height: 12),
+                        ...imageWidgets,
+                      ],
+                    ),
+                  ),
+                ],
+
+                pw.SizedBox(height: 20),
+
+                // Footer
+                pw.Container(
+                  padding: const pw.EdgeInsets.all(16),
+                  decoration: pw.BoxDecoration(
+                    color: PdfColors.grey100,
+                    borderRadius: pw.BorderRadius.circular(8),
+                  ),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(
+                        'This is an official document generated by ${AuthService.currentDepartment?.department ?? 'the department'} through the Third Eye Citizen Reporting System.',
+                        style: const pw.TextStyle(
+                          fontSize: 10,
+                          color: PdfColors.grey700,
+                        ),
+                      ),
+                      pw.SizedBox(height: 4),
+                      pw.Text(
+                        'Issue ID: ${issue.id} | Generated: ${DateTime.now().toString()}',
+                        style: const pw.TextStyle(
+                          fontSize: 10,
+                          color: PdfColors.grey700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+        ),
+      );
+
+      // Close loading dialog
+      if (context.mounted) {
+        Navigator.pop(context);
+      }
+
+      // Save and share PDF
+      final fileName =
+          'Issue_Report_${issue.id.substring(0, 8)}_${DateTime.now().millisecondsSinceEpoch}.pdf';
+      await Printing.sharePdf(bytes: await pdf.save(), filename: fileName);
+
+      // Show success message
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Department report generated successfully!'),
+            backgroundColor: Color(0xFF10B981),
+          ),
+        );
+      }
+    } catch (e) {
+      // Close loading dialog if open
+      if (context.mounted) {
+        Navigator.pop(context);
+      }
+
+      print('Error generating PDF: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error generating report: $e'),
+            backgroundColor: const Color(0xFFEF4444),
+          ),
+        );
+      }
+    }
+  }
+
+  void _showCompletionImageUpload(BuildContext context, Issue issue) {
+    showDialog(
+      context: context,
+      builder:
+          (context) => _CompletionImageUploadDialog(
+            issue: issue,
+            onUploadSuccess: onRefresh,
+          ),
     );
   }
 
@@ -3013,20 +3522,6 @@ class _IssueActions extends StatelessWidget {
     );
   }
 
-  void _showCompletionImageUpload(BuildContext context, Issue issue) {
-    showDialog(
-      context: context,
-      builder:
-          (context) => _CompletionImageUploadDialog(
-            issue: issue,
-            onUploadSuccess: () {
-              // Call the refresh callback if available
-              onRefresh?.call();
-            },
-          ),
-    );
-  }
-
   IconData _getStatusIcon(String status) {
     switch (status.toLowerCase()) {
       case 'reported':
@@ -3036,6 +3531,8 @@ class _IssueActions extends StatelessWidget {
         return Icons.engineering;
       case 'resolved':
         return Icons.check_circle;
+      case 'spam':
+        return Icons.warning_amber;
       default:
         return Icons.help_outline;
     }
@@ -3050,6 +3547,8 @@ class _IssueActions extends StatelessWidget {
         return const Color(0xFF3B82F6);
       case 'resolved':
         return const Color(0xFF10B981);
+      case 'spam':
+        return const Color(0xFFEF4444);
       default:
         return const Color(0xFF64748B);
     }
@@ -3718,5 +4217,348 @@ class _CompletionImageUploadDialogState
         behavior: SnackBarBehavior.floating,
       ),
     );
+  }
+}
+
+// Spam Reports Dialog
+class SpamReportsDialog extends StatefulWidget {
+  const SpamReportsDialog({super.key});
+
+  @override
+  State<SpamReportsDialog> createState() => _SpamReportsDialogState();
+}
+
+class _SpamReportsDialogState extends State<SpamReportsDialog> {
+  List<Issue> spamReports = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSpamReports();
+  }
+
+  Future<void> _loadSpamReports() async {
+    setState(() => isLoading = true);
+    try {
+      // Get all spam reports - use 'Spam' as stored in database
+      final reports = await SupabaseService.getIssues(status: 'Spam');
+      if (mounted) {
+        setState(() {
+          spamReports = reports;
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading spam reports: $e');
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _deleteSpamReport(String issueId) async {
+    try {
+      // Show confirmation dialog
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder:
+            (context) => AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: Row(
+                children: [
+                  Icon(Icons.warning, color: const Color(0xFFEF4444), size: 24),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Delete Spam Report',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF334155),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              content: const Text(
+                'Are you sure you want to permanently delete this spam report? This action cannot be undone.',
+                style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(color: const Color(0xFF64748B)),
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () => Navigator.pop(context, true),
+                  icon: const Icon(Icons.delete_forever, size: 16),
+                  label: const Text('Delete'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFEF4444),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+      );
+
+      if (confirmed == true) {
+        // Delete from database
+        final success = await SupabaseService.deleteIssue(issueId);
+
+        if (success) {
+          // Refresh the list
+          await _loadSpamReports();
+
+          // Show success message
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Spam report deleted successfully'),
+                backgroundColor: Color(0xFF10B981),
+              ),
+            );
+          }
+        } else {
+          throw Exception('Failed to delete issue');
+        }
+      }
+    } catch (e) {
+      print('Error deleting spam report: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error deleting spam report: $e'),
+            backgroundColor: const Color(0xFFEF4444),
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.8,
+        height: MediaQuery.of(context).size.height * 0.8,
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEF4444).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.report_problem,
+                    color: Color(0xFFEF4444),
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Spam Reports (${spamReports.length})',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF0F172A),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close),
+                  tooltip: 'Close',
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // Content
+            Expanded(
+              child:
+                  isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : spamReports.isEmpty
+                      ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.check_circle,
+                              size: 48,
+                              color: Colors.grey.shade400,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No spam reports found',
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(color: Colors.grey.shade600),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'All reports are clean!',
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(color: Colors.grey.shade500),
+                            ),
+                          ],
+                        ),
+                      )
+                      : ListView.builder(
+                        itemCount: spamReports.length,
+                        itemBuilder: (context, index) {
+                          final issue = spamReports[index];
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: BorderSide(color: Colors.grey.shade200),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          issue.title,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 16,
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      IconButton(
+                                        onPressed:
+                                            () => _deleteSpamReport(issue.id),
+                                        icon: const Icon(
+                                          Icons.delete_forever,
+                                          color: Color(0xFFEF4444),
+                                        ),
+                                        tooltip: 'Delete Spam Report',
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.category,
+                                        size: 16,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        issue.issueType,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey.shade600,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Icon(
+                                        Icons.schedule,
+                                        size: 16,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        _formatDate(issue.createdAt),
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey.shade600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  if (issue.description.isNotEmpty) ...[
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      issue.description,
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.grey.shade700,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'ID: ${issue.id.substring(0, 8)}',
+                                    style: TextStyle(
+                                      fontFamily: 'monospace',
+                                      fontSize: 11,
+                                      color: Colors.grey.shade500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+            ),
+
+            // Footer
+            if (!isLoading && spamReports.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Total: ${spamReports.length} spam report${spamReports.length == 1 ? '' : 's'}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: _loadSpamReports,
+                      icon: const Icon(Icons.refresh, size: 16),
+                      label: const Text('Refresh'),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inDays > 0) {
+      return '${difference.inDays}d ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours}h ago';
+    } else {
+      return '${difference.inMinutes}m ago';
+    }
   }
 }
